@@ -1,0 +1,19 @@
+
+.logo{
+	position: relative;
+	top: -5px;
+}
+.navText {
+	color: white;
+	font-family: Merriweather;
+}
+#canvas{
+  width:800px;
+  height: 600px;
+  border: 1px solid black;
+  padding: 0px;
+}
+
+#playGameBtn{
+	color:red;
+}

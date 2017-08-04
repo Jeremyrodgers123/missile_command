@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset= "utf-8">
+	<title> Missle Command </title>
+	<link rel="stylesheet" href= "assets/main.css"></link>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+	<link href="https://fonts.googleapis.com/css?family=Merriweather" rel="stylesheet"> 
+</head>
+<body>
+  <nav class = "navbar navbar-light" style= "background-color: rgb(54, 193, 190)">
+    <div>
+	    <a class="navbar-brand" href="#">
+	      <img class = "logo" src="assets/Nintendo-Logo.png" height="30" alt="">
+	    </a>
+    </div>
+   <ul class="nav navbar-nav">
+      <li class="nav-item active ">
+        <a class="nav-link navText" href="#">Missle Command <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link navText" href="#">Snake</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link navText" href="#">Minesweeper</a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link disabled navText" href="#">Disabled</a>
+      </li>
+    </ul> 
+  </nav>
+  <div class = "container-fluid">
+    <div class="row">
+    	<canvas width = "600" height = "600" id= "canvas" class = "col-md-8 col-md-offset-2">
+    		
+    	</canvas>
+    </div>
+    <div class = "row">
+    	<div class = "col-md-8 col-md-offset-2">
+    		<button id = "playGameBtn"> Play game </button>
+    	</div>
+    </div>
+
+  </div>
+
+
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="assets/main.js"></script>
+</body>
+</html>
