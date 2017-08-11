@@ -25,23 +25,32 @@ $(document).ready(function(){
 	function draw(){
 		$context.clearRect(0,0,CANVAS_WIDTH, CANVAS_HEIGHT);
 		
+		// loop through each base
 		for (var i = 0; i < game.bases.length; i++){
 			//game.bases[i].setXPosition(i);
+			
 			game.bases[i].draw($context);
+
+			//loop through missiles
 			for (var j = 0; j < game.bases[i].missiles.length; j++){
 				game.bases[i].missiles[j].draw($context)
 			};
 		};
-
+		//loop through and draw each enemy
 		for (var i = 0; i < game.enemies.length; i++){
+			
 			game.enemies[i].draw($context);
+			//game.enemies[i].checkCollision($context);
 		}
 	}
 	function update(){
 		xPos += 1;
 		yPos += 1;
+		//update enemy position
 		for(var i = 0; i < game.enemies.length; i++){
 			game.enemies[i].updatePosition();
+			checkCollision(game.enemies, i, game.enemies[i], game.activeMissiles);
+			
 		};
 		for(var j = 0; j < game.bases.length; j++){
 			var missiles = game.bases[j].missiles
@@ -62,10 +71,18 @@ var Base = function(){
 	this.currentPosition = [];//update with base's position
 	this.missiles = [];
 	this.xPos = 50;
-	this.yPos = 550;
+	this.yPos = 600 - 69;
 	this.width = 50;
 	this.height = 50;
 	this.color = "#00e50a"
+	this.baseImg = new Image();
+	this.baseImg.src = 'assets/base.png';
+	this.baseState = 0;
+	this.baseImgX = 295;
+	this.baseImgY = 154;
+	this.baseImgWidth = 44;
+	this.baseImgHeight = 69;
+
 } 
 Base.prototype = {
 	constructor: Base,
@@ -87,9 +104,16 @@ Base.prototype = {
 		}
 	},
 	fire: function(){
+	  var incactiveMissiles = this.missiles.filter(function(missile){
+	  	return missile.isActive === false;
+	  })
+
 	  if (this.missileCount() >= 1){
-	  	this.missiles[this.missiles.length - 1].isActive = true;
+	  	var missile = incactiveMissiles[incactiveMissiles.length - 1]
+	  	missile.isActive = true;
+	  	game.activeMissiles.push(missile)
 	  	console.log(this.missileCount());
+	  	console.log(game.activeMissiles)
 
 	  } else{
 	  	console.log("out");
@@ -129,7 +153,13 @@ Base.prototype = {
 	},
 	draw: function($context){
 		$context.fillStyle = this.color;
-		$context.fillRect(this.xPos , this.yPos, this.width, this.height)
+		//$context.fillRect(this.xPos , this.yPos, this.width, this.height)
+		$context.drawImage(this.baseImg,
+											 this.baseImgX,this.baseImgY, this.baseImgWidth, this.baseImgHeight,
+											 this.xPos, this.yPos, this.baseImgWidth, this.baseImgHeight)
+
+
+
 	}
 }
 //***********Missile*******************
@@ -144,13 +174,43 @@ var Missile = function(){
 	this.currentPosition = [];
 	this.isCollision = false;
 	this.isActive = false;
+	this.blownUp = false;
+	this.hide = false;
+	this.explosionImg = new Image();
+	this.explosionImg.src = 'assets/explosion.png';
+	this.explosionState = 0;
+	this.explosionX = 0;
+	this.explosionY = 0;
+	this.explosionWidth = 0;
+	this.explosionHeight = 0;
+
 }
 
 Missile.prototype = {
 	constructor: Missile,
 	draw: function($context){
-		$context.fillStyle = this.color;
-		$context.fillRect(this.xPos, this.yPos, this.width, this.height);
+		if (this.hide === true) {
+			
+			  return};
+
+		if (this.isCollision === true){
+
+		  this.setExplosionState()
+
+		  $context.drawImage(this.explosionImg,
+		  					 this.explosionX,this.explosionY,this.explosionWidth,this.explosionHeight,
+		  					 this.xPos - 25,this.yPos - 50, this.explosionWidth,this.explosionHeight);
+		  //this.explosionX,this.explosionY,this.explosionWidth,this.explosionHeight,
+		  this.explosionState +=1
+
+		  if (this.explosionState > 13){
+		  	this.hide = true;
+		  }
+
+		}else {
+		  $context.fillStyle = this.color;
+		  $context.fillRect(this.xPos, this.yPos, this.width, this.height);
+		}
 	},
 	setXPos: function(base, length, i){
 		var start = base.xPos + base.width + 5;
@@ -174,6 +234,8 @@ Missile.prototype = {
 		//console.log(this.xPos)
 	},
 	updatePosition: function(base){
+		if (this.isCollision === true){return};
+
 		if (this.isActive && this.startPosition === this.xPos){
 			var baseWidth = base.width / 2;
 			this.xPos = baseWidth + base.xPos -2.5;
@@ -183,6 +245,103 @@ Missile.prototype = {
 		if (this.isActive){
 			this.yPos = this.yPos - 5;
 		}
+	},
+
+	setExplosionState : function(){
+
+		switch (this.explosionState){
+			case 0:
+			  this.explosionX = 164 ;
+				this.explosionY = 424 ;
+				this.explosionWidth = 45 ;
+				this.explosionHeight = 49;
+			break;
+			case 1:
+			  this.explosionX = 37 ;
+				this.explosionY = 424 ;
+				this.explosionWidth = 45 ;
+				this.explosionHeight = 49;
+			break;
+			case 2:
+			  this.explosionX = 421 ;
+				this.explosionY = 296 ;
+				this.explosionWidth = 45 ;
+				this.explosionHeight = 49;
+			break;
+			case 3:
+			  this.explosionX = 292 ;
+				this.explosionY = 294 ;
+				this.explosionWidth = 48 ;
+				this.explosionHeight = 52;
+			break;
+			case 4:
+			  this.explosionX = 165 ;
+				this.explosionY = 294 ;
+				this.explosionWidth = 47 ;
+				this.explosionHeight = 53;
+			break;
+			case 5:
+			  this.explosionX = 24 ;
+				this.explosionY = 273 ;
+				this.explosionWidth = 79 ;
+				this.explosionHeight = 88;
+			break;
+			case 6:
+			  this.explosionX = 398 ;
+				this.explosionY = 142 ;
+				this.explosionWidth = 93 ;
+				this.explosionHeight = 92;
+			break;
+			case 7:
+			  this.explosionX = 269 ;
+				this.explosionY = 141 ;
+				this.explosionWidth = 95 ;
+				this.explosionHeight = 97;
+			break;
+			case 8:
+			  this.explosionX = 141 ;
+				this.explosionY = 134 ;
+				this.explosionWidth = 102 ;
+				this.explosionHeight = 114;
+			break;
+			case 9:
+			  this.explosionX = 11 ;
+				this.explosionY = 133 ;
+				this.explosionWidth = 106 ;
+				this.explosionHeight = 115;
+			break;
+			case 10:
+			  this.explosionX = 391 ;
+				this.explosionY = 4 ;
+				this.explosionWidth = 113 ;
+				this.explosionHeight = 119;
+			break;
+			case 11:
+			  this.explosionX = 263 ;
+				this.explosionY = 1 ;
+				this.explosionWidth = 108 ;
+				this.explosionHeight = 121;
+			break;
+			case 12:
+			  this.explosionX = 140 ;
+				this.explosionY = 9 ;
+				this.explosionWidth = 96 ;
+				this.explosionHeight = 109;
+			break;
+			case 13:
+			  this.explosionX = 30 ;
+				this.explosionY = 19 ;
+				this.explosionWidth = 66 ;
+				this.explosionHeight = 76;
+			break;
+			case 14:
+			  this.explosionX = 0 ;
+				this.explosionY = 0 ;
+				this.explosionWidth = 0 ;
+				this.explosionHeight = 0;
+			break;
+		}
+	  
 	}
 }
 //***********City*******************
@@ -202,6 +361,7 @@ var Enemy = function(){
 	this.direction ="right";
 	this.max = 200;
 	this.min = 0;
+	this.isAlive = true
 
 }
 Enemy.prototype = {
@@ -217,8 +377,14 @@ Enemy.prototype = {
 		console.log("insert fire function")
 	},
 	draw: function($context){
+		if (this.isAlive === false) {
+			return;
+		}
+
 		$context.fillStyle = this.color;
 		$context.fillRect(this.xPos,this.yPos, this.width, this.height)
+
+		this.checkCollision()
 	},
 	updatePosition: function(){
 		if (this.direction === "right"){
@@ -226,18 +392,27 @@ Enemy.prototype = {
 		}else if (this.direction ==="left"){
 			this.xPos += -2 
 		};
-
 		if (this.xPos === this.max){
 			this.direction = "left"
 		};
-
 		if (this.xPos === this.min){
 			this.direction = "right"
 		};
 
 	},
-	clamp: function(){
+	checkCollision: function(){
+		game.activeMissiles.forEach(function (missile){
+			//this problems 
+			var x = this.xPos;
+			var y = this.yPos;
+			var xMax = x + this.width;
+			var yMax = y + this.height;
 
+			if (missile.xPos >= x && missile.xPos <= xMax && missile.yPos >= y && missile.yPos <= yMax){
+				console.log("boom!!!")
+			};
+
+		})
 	}
 }
 //***********BULLET*******************
@@ -252,6 +427,7 @@ var game = {
 	bases : [],
 	cities : [],
 	enemies: [],
+	activeMissiles: [],
 	baseCount: 3,
 	missleCount: 10,
 	cityCount: 5,
@@ -324,8 +500,42 @@ var game = {
 
 		callback(array)
 	},
-	collisionDetection: function(){
+	collisionDetection: function(enemy, activeMissile){
+
+		game.enemies.forEach(function(enemy){
+			console.log(enemy)
+		});
 
 	}
+}
+
+var checkCollision = function(parentArray, index, object, missiles){
+  
+  for (var i = 0; i < missiles.length; i++){
+  	var missile = missiles[i];
+
+  	var missileX = missile.xPos + missile.width/2;
+  	var missileY = missile.yPos + missile.height/2;
+  	var objX = object.xPos 
+  	var objY = object.yPos
+  	var maxX = object.xPos + object.width
+  	var maxY = object.yPos + object.height
+
+  
+  	if ( missileX >= objX && missileX <= maxX && missileY >= objY && missileY <= maxY){
+  	  object.isAlive = false;
+  	  missile.isCollision = true;
+  	  
+  	  explosion(object);
+  	  console.log(parentArray);
+  	  console.log(index)
+  	  //parentArray.splice(index, 1);
+  	}
+  }
+  
+}
+
+var explosion = function(object){
+	console.log("boomb!"+ " " + object.constructor.name)
 }
 
