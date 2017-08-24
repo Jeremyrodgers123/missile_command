@@ -1,7 +1,7 @@
 $(document).ready(function(){
 //***********CANVAS*******************	
 
-	var CANVAS_WIDTH = 600;
+	var CANVAS_WIDTH = 800;
 	var CANVAS_HEIGHT = 600;
 	var $canvas = $("#canvas")
 	var $context = $canvas.get(0).getContext('2d')
@@ -10,8 +10,19 @@ $(document).ready(function(){
 
 	game.initailize();
 
-	$canvas.on('click', function(){
-		game.bases[0].fire();
+	$canvas.on('click', function(event){
+		
+		var offset = $(this).offset()
+		//alert("offset left: "+ offset.left)
+		var clickedX = event.pageX - offset.left;
+		var clickedY = event.pageY - offset.top - 2;
+		console.log("X");
+		console.log(event)
+		//alert("x: " + clickedX+ " y: "+ clickedY)
+		// decide which base should fire
+		var shootingBase = game.pickShooter(clickedX,clickedY,CANVAS_WIDTH,CANVAS_HEIGHT);
+		console.log(shootingBase);
+		shootingBase.fire(clickedX,clickedY);
 	});
 //***********button*******************
 	$('#playGameBtn').on('click', function(){
@@ -70,6 +81,7 @@ var Base = function(){
 	//this.img = console.log("cool image");
 	this.currentPosition = [];//update with base's position
 	this.missiles = [];
+	this.isAlive = false;
 	this.xPos = 50;
 	this.yPos = 600 - 69;
 	this.width = 50;
@@ -103,7 +115,7 @@ Base.prototype = {
 			this.missiles.push(new Missile);
 		}
 	},
-	fire: function(){
+	fire: function(x,y){
 	  var incactiveMissiles = this.missiles.filter(function(missile){
 	  	return missile.isActive === false;
 	  })
@@ -111,21 +123,26 @@ Base.prototype = {
 	  if (this.missileCount() >= 1){
 	  	var missile = incactiveMissiles[incactiveMissiles.length - 1]
 	  	missile.isActive = true;
+	  	missile.targetX = x;
+	  	missile.targetY = y;
+	  	var baseLocation = this.xPos + this.width/2;
+	  	missile.setRadian(missile.targetX,missile.targetY, baseLocation);
+	  	//alert("x: " + missile.targetX+ " y: "+ missile.targetY)
 	  	game.activeMissiles.push(missile)
 	  	console.log(this.missileCount());
 	  	console.log(game.activeMissiles)
 
 	  } else{
 	  	console.log("out");
-	  }
+	  };
 	},
 	setXPosition: function(i, length){
 		//console.log(this)
 		//object variable inserted to fix using apply to borrow method
 		var object = this[i]
 		var start = 25;
-		var finish = 600 - (start * 3)
-		var interval = 600 / length
+		var finish = 800 - (start * 3)
+		var interval = 800 / length
 		if (i === 0) {
 			object.xPos = start;
 			object.min = start;
@@ -167,8 +184,11 @@ var Missile = function(){
 	//this.img = console.log("cool misslile image");
 	this.xPos = 80;
 	this.yPos = 575;
-	this.width = 5;
-	this.height = 20;
+	this.targetX = 0;
+	this.targetY = 0;
+	this.radian = 0;
+	this.width = 10;
+	this.height = 40;
 	this.color = "#42f4c5"
 	this.startPosition = 0; // fill with start position
 	this.currentPosition = [];
@@ -176,6 +196,15 @@ var Missile = function(){
 	this.isActive = false;
 	this.blownUp = false;
 	this.hide = false;
+
+	this.missileImg = new Image();
+	this.missileImg.src = "assets/Rocket.png";
+	
+	this.missileImgWidth = 79;
+	this.missileImgHeight = 300;
+	this.missileImgX = 110;
+	this.missileImgY = 0;
+
 	this.explosionImg = new Image();
 	this.explosionImg.src = 'assets/explosion.png';
 	this.explosionState = 0;
@@ -208,8 +237,15 @@ Missile.prototype = {
 		  }
 
 		}else {
+
+			$context.drawImage(this.missileImg,
+												 this.missileImgX, this.missileImgY, this.missileImgWidth, this.missileImgHeight,
+												 this.xPos, this.yPos, this.width, this.height);
+			
+	/**	  
 		  $context.fillStyle = this.color;
 		  $context.fillRect(this.xPos, this.yPos, this.width, this.height);
+**/
 		}
 	},
 	setXPos: function(base, length, i){
@@ -238,14 +274,33 @@ Missile.prototype = {
 
 		if (this.isActive && this.startPosition === this.xPos){
 			var baseWidth = base.width / 2;
-			this.xPos = baseWidth + base.xPos -2.5;
+			this.xPos = baseWidth + base.xPos - 10;
 			this.yPos = base.yPos - this.height;
+
+			
+			
 		};
 
 		if (this.isActive){
+			//figure out angles
+			//alert("radians are: "+ this.radian);
+			
 			this.yPos = this.yPos - 5;
 		}
 	},
+
+	setRadian: function(x,y,baseLocation){
+		var adjacentSide = x - baseLocation;
+		var oppositeSide = 600 - y;
+ 		var ratio = oppositeSide/adjacentSide;
+
+ 		var radians = Math.atan(ratio) * 180/Math.PI;
+ 		//alert("ratio" + ratio)
+ 		//alert("radians: " + radians)
+ 		this.radian = radians;
+ 		//alert("radians are: "+ this.radian);
+	},
+
 
 	setExplosionState : function(){
 
@@ -359,7 +414,7 @@ var Enemy = function(){
 	this.height = 50;
 	this.color = "#f46672";
 	this.direction ="right";
-	this.max = 200;
+	this.max = 800/3;
 	this.min = 0;
 	this.isAlive = true
 
@@ -384,7 +439,7 @@ Enemy.prototype = {
 		$context.fillStyle = this.color;
 		$context.fillRect(this.xPos,this.yPos, this.width, this.height)
 
-		this.checkCollision()
+		//this.checkCollision()
 	},
 	updatePosition: function(){
 		if (this.direction === "right"){
@@ -392,10 +447,10 @@ Enemy.prototype = {
 		}else if (this.direction ==="left"){
 			this.xPos += -2 
 		};
-		if (this.xPos === this.max){
+		if (this.xPos >= this.max){
 			this.direction = "left"
 		};
-		if (this.xPos === this.min){
+		if (this.xPos <= this.min){
 			this.direction = "right"
 		};
 
@@ -471,6 +526,22 @@ var game = {
 			game.bases.push(base);
 		}
 	},
+	pickShooter: function(x,y,CANVAS_WIDTH,CANVAS_HEIGHT){
+		var airCoverageDistance = CANVAS_WIDTH/ game.bases.length;
+		console.log("Pick Shooter method")
+		console.log(x)
+		console.log(airCoverageDistance);
+
+		var i = Math.floor(x/airCoverageDistance)
+
+		if (i > game.bases.length - 1){
+			i -= 1
+		}
+
+		return game.bases[i]
+
+
+	},
 	setXPos : function(array){	
 		for (var i = 0; i < array.length; i++){
 			var length = array.length
@@ -521,21 +592,23 @@ var checkCollision = function(parentArray, index, object, missiles){
   	var maxX = object.xPos + object.width
   	var maxY = object.yPos + object.height
 
-  
+
+  	if (object.isAlive === false){
+  		return
+  	}
   	if ( missileX >= objX && missileX <= maxX && missileY >= objY && missileY <= maxY){
   	  object.isAlive = false;
   	  missile.isCollision = true;
+
+
   	  
   	  explosion(object);
-  	  console.log(parentArray);
-  	  console.log(index)
-  	  //parentArray.splice(index, 1);
   	}
   }
   
 }
 
 var explosion = function(object){
-	console.log("boomb!"+ " " + object.constructor.name)
+//	console.log("boomb!"+ " " + object.constructor.name)
 }
 
